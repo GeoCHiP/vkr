@@ -1,38 +1,37 @@
 def parser(file_, verbose=0):
+    GATES = ['not', 'and', 'or', 'nand', 'nor', 'xor', 'xnor', 'buf', 'assign']
+    # all input ports are taken as nodes to visualize better
+    input_nodes = []
+    # all output ports are taken as nodes to visualize better
+    output_nodes = []
+    # nodes
+    gates = []
+    # [edges][(tail, head)] here the first index is the name of the wire;
+    # tail and head are the nodes to which the edge is connected to
+    wires = []
+
     v_file = open(file_, 'r')
     n = 0
-
-    GATES = ['not', 'and', 'or', 'nand', 'nor', 'xor', 'xnor', 'buf', 'assign']
-    input_nodes = []        # all input ports are taken as nodes to visualize better
-    output_nodes = []        # all output ports are taken as nodes to visualize better
-    gates = []                # nodes
-    wires = []                # [edges][(tail, head)] here the first index is the name of the wire;
-                            # tail and head are the nodes to which the edge is connected to
-
     line = v_file.readline()
     while line:
-
         # remove all leading spaces
         line = line.lstrip()
 
-        # find all the input ports
-        if line.startswith('input'):
+        if line.startswith('//') or line.startswith('module'):
+            pass
+        elif line.startswith('input'):
+            # find all the input ports
             line = line.lstrip('input').split(sep=',')[:-1]
             line = [x.strip(',;\n ') for x in line]
-            [input_nodes.append(x) for x in line]
-
-        # find all the output ports
+            input_nodes.extend(line)
         elif line.startswith('output'):
+            # find all the output ports
             line = line.lstrip('output').split(sep=',')
             line = [x.strip(',;\n ') for x in line]
-            [output_nodes.append(x) for x in line]
-
-        elif line.startswith('//') or line.startswith('module'):
-            pass
-
+            output_nodes.extend(line)
         elif line.startswith('assign'):
             gate = 'assign' + str(n)
-            n = n + 1
+            n += 1
             gates.append(gate)
 
             line = ''.join(line.split(' ')[1:])[:-1]
@@ -41,46 +40,40 @@ def parser(file_, verbose=0):
             _output = line[0]
             _input = line[1:]
 
-
-
             if _output in output_nodes:
                 wires.append([_output, gate, [_output]])
             else:
-                flag = 0
+                flag = False
                 for i in wires:
                     if i[0] == _output:
                         i[1] = gate
-                        flag = 1
+                        flag = True
                         break
-
-                if flag == 0:
+                if not flag:
                     wires.append([_output, gate, []])
 
             for i in _input:
                 # print(i, end='')
                 if i in input_nodes:
-                    flag = 0
+                    flag = False
                     for j in wires:
                         if j[0] == i:
                             j[2].append(gate)
-                            flag = 1
+                            flag = True
                             break
-                    if flag == 0:
+                    if not flag:
                         wires.append([i, i, [gate]])
-
                 else:
-                    flag = 0
+                    flag = False
                     for j in wires:
                         if j[0] == i:
                             j[2].append(gate)
-                            flag = 1
+                            flag = True
                             break
-
-                    if flag == 0:
+                    if not flag:
                         wires.append([i, ' ', [gate]])
-
-        # find all the connections and gates
         elif any(g in line for g in GATES):
+            # find all the connections and gates
 
             # remove gate type (gate instantiation) from line
             stri = ''
