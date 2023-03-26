@@ -28,7 +28,7 @@ def parse_args():
         help='output file names prefix',
     )
     parser.add_argument(
-        '-d',
+        '-o',
         '--output-directory',
         default='combcirc',
         help='output files directory',
@@ -86,8 +86,8 @@ def main():
     num_edges = block_diag_adj_mat.count_nonzero()
     num_nodes = block_diag_adj_mat.shape[0]
 
-    if not os.path.exists(args.prefix):
-        os.makedirs(args.prefix)
+    if not os.path.exists(args.output_directory):
+        os.makedirs(args.output_directory)
 
     with open(f'{args.output_directory}/{args.prefix}_A.txt', 'w') as ofile:
         n = 0
