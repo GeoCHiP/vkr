@@ -48,6 +48,11 @@ def get_reliability(json_filepath: str):
     graph_info = json.loads(json_data)
     return graph_info['reliability']
 
+def add_to_dict(target_dict, lst):
+    for element in lst:
+        if element not in target_dict:
+            target_dict[element] = len(target_dict)
+
 def main():
     args = parse_args()
 
@@ -56,9 +61,12 @@ def main():
     graph_indicator = []
     graph_labels = []
 
-    n_lbl_types = ['x', 'f', 'assign', 'and', 'or', 'xor', 'not', 'nand', 'nor', 'xnor', ' ']
-    n_lbl_to_id = {n_lbl_types[i]: i for i in range(len(n_lbl_types))}
-    node_labels = []
+    # n_lbl_types = ['x', 'f', 'assign', 'and', 'or', 'xor', 'not', 'nand', 'nor', 'xnor', ' ']
+    # n_lbl_to_id = {n_lbl_types[i]: i for i in range(len(n_lbl_types))}
+    n_lbl_to_id = {}
+    e_lbl_to_id = {}
+    node_ids = []
+    edge_ids = []
 
     with tqdm(total=num_graphs) as pbar:
         for i, filepath in enumerate(glob.iglob(f'{args.dataset_path}/*/*/*.v')):
@@ -78,8 +86,20 @@ def main():
             if args.verbose and ' ' in DG.nodes:
                 print("found ' ' in", filepath)
 
-            labels = [re.sub(r'^(.+?)\d+$', r'\1', n) for n in DG.nodes]
-            node_labels.extend([n_lbl_to_id[lbl] for lbl in labels])
+            labels_pattern = r'^(.+?)\d+$'
+
+            node_labels = [re.sub(labels_pattern, r'\1', n) for n in DG.nodes]
+            add_to_dict(n_lbl_to_id, node_labels)
+            node_ids.extend([n_lbl_to_id[lbl] for lbl in node_labels])
+
+            edge_labels = [(re.sub(labels_pattern, r'\1', e[0]), re.sub(labels_pattern, r'\1', e[1])) for e in DG.edges]
+            add_to_dict(e_lbl_to_id, edge_labels)
+            edge_ids.extend([e_lbl_to_id[lbl] for lbl in edge_labels])
+
+            # for e in edge_labels:
+                # if e not in e_lbl_to_id:
+                    # e_lbl_to_id[e] = len(e_lbl_to_id)
+
 
             pbar.update(1)
 
@@ -105,7 +125,7 @@ def main():
 
         assert n == num_nodes
 
-    with open(f'{args.output_directory}/{args.prefix}_graph_labels.txt', 'w') as ofile:
+    with open(f'{args.output_directory}/{args.prefix}_graph_attributes.txt', 'w') as ofile:
         n = 0
         for val in graph_labels:
             ofile.write(f'{val}\n')
@@ -115,12 +135,29 @@ def main():
 
     with open(f'{args.output_directory}/{args.prefix}_node_labels.txt', 'w') as ofile:
         n = 0
-        for val in node_labels:
+        for val in node_ids:
             ofile.write(f'{val}\n')
             n += 1
 
         assert n == num_nodes
 
+    with open(f'{args.output_directory}/{args.prefix}_edge_labels.txt', 'w') as ofile:
+        n = 0
+        for val in edge_ids:
+            ofile.write(f'{val}\n')
+            n += 1
+
+        assert n == num_edges
+
+    with open(f'{args.output_directory}/{args.prefix}_node_labels_mapping.txt', 'w') as ofile:
+        ofile.write('Node labels:\n\n')
+        for lbl, lbl_id in n_lbl_to_id.items():
+            ofile.write(f' {lbl_id}  "{lbl}"\n')
+
+    with open(f'{args.output_directory}/{args.prefix}_edge_labels_mapping.txt', 'w') as ofile:
+        ofile.write('Edge labels:\n\n')
+        for lbl, lbl_id in e_lbl_to_id.items():
+            ofile.write(f' {lbl_id}  "{lbl}"\n')
 
     if args.verbose:
         print('Done.')
