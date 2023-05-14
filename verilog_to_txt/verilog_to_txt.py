@@ -11,6 +11,7 @@ from tqdm import tqdm
 
 from verilog_to_graph import parser, grapher
 
+
 def parse_args():
     parser = argparse.ArgumentParser(
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
@@ -43,15 +44,18 @@ def parse_args():
 
     return args
 
+
 def get_reliability(json_filepath: str):
     json_data = Path(json_filepath).read_text()
     graph_info = json.loads(json_data)
     return graph_info['reliability']
 
+
 def add_to_dict(target_dict, lst):
     for element in lst:
         if element not in target_dict:
             target_dict[element] = len(target_dict)
+
 
 def main():
     args = parse_args()
@@ -61,8 +65,6 @@ def main():
     graph_indicator = []
     graph_labels = []
 
-    # n_lbl_types = ['x', 'f', 'assign', 'and', 'or', 'xor', 'not', 'nand', 'nor', 'xnor', ' ']
-    # n_lbl_to_id = {n_lbl_types[i]: i for i in range(len(n_lbl_types))}
     n_lbl_to_id = {}
     e_lbl_to_id = {}
     node_ids = []
@@ -95,11 +97,6 @@ def main():
             edge_labels = [(re.sub(labels_pattern, r'\1', e[0]), re.sub(labels_pattern, r'\1', e[1])) for e in DG.edges]
             add_to_dict(e_lbl_to_id, edge_labels)
             edge_ids.extend([e_lbl_to_id[lbl] for lbl in edge_labels])
-
-            # for e in edge_labels:
-                # if e not in e_lbl_to_id:
-                    # e_lbl_to_id[e] = len(e_lbl_to_id)
-
 
             pbar.update(1)
 
