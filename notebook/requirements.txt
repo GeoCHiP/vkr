@@ -76,7 +76,6 @@ psutil==5.9.4
 ptyprocess==0.7.0
 pure-eval==0.2.2
 pycparser==2.21
-pyg-lib==0.2.0+pt20cu118
 Pygments==2.14.0
 pyparsing==3.0.9
 pyrsistent==0.19.3
@@ -99,14 +98,6 @@ terminado==0.17.1
 threadpoolctl==3.1.0
 tinycss2==1.2.1
 tomli==2.0.1
-torch==2.0.0+cu118
-torch-cluster==1.6.1+pt20cu118
-torch-geometric==2.3.0
-torch-scatter==2.1.1+pt20cu118
-torch-sparse==0.6.17+pt20cu118
-torch-spline-conv==1.2.2+pt20cu118
-torchaudio==2.0.1+cu118
-torchvision==0.15.1+cu118
 tornado==6.2
 tqdm==4.65.0
 traitlets==5.9.0
