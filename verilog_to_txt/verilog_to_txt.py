@@ -190,6 +190,8 @@ class ISCADataset:
             'c2670': 0.5,  # dunno
             'c3540': 0.3442,
             'c5315': 0.5,  # dunno
+            'c6288': 0.5,  # dunno
+            'c7552': 0.5,  # dunno
         }
 
     def _get_reliability(self, circuit_name: str) -> float:
