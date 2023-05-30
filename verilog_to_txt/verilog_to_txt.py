@@ -3,24 +3,34 @@ import glob
 import json
 import argparse
 import os
+import itertools
 from pathlib import Path
 
 import networkx as nx
 from scipy.sparse import coo_array, block_diag
 from tqdm import tqdm
+from circuitgraph.io import bench_to_circuit
 
 from verilog_to_graph import parser, grapher
 
 
 def parse_args():
+    dataset_types = ['verilog', 'bench']
     parser = argparse.ArgumentParser(
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+    )
+    parser.add_argument(
+        '-t',
+        '--dataset-type',
+        choices=dataset_types,
+        default=dataset_types[0],
+        help='the type of the dataset',
     )
     parser.add_argument(
         '-d',
         '--dataset-path',
         default='verilog_dataset',
-        help='path to the verilog dataset directory',
+        help='path to the dataset directory',
     )
     parser.add_argument(
         '-p',
@@ -45,12 +55,6 @@ def parse_args():
     return args
 
 
-def add_to_dict(target_dict: dict, lst: list) -> None:
-    for element in lst:
-        if element not in target_dict:
-            target_dict[element] = len(target_dict)
-
-
 class CombcircDataset:
     def __init__(self, path: str, verbose: bool = False):
         self.path = path
@@ -59,8 +63,10 @@ class CombcircDataset:
         self.graph_indicator = []
         self.graph_labels = []
 
-        self.n_lbl_to_id = {}
-        self.e_lbl_to_id = {}
+        self.n_lbl_types = ['x', 'f', 'buf', 'and', 'or', 'xor', 'not', 'nand', 'nor', 'xnor', ' ', 'assign']
+        self.n_lbl_to_id = {self.n_lbl_types[i]: i for i in range(len(self.n_lbl_types))}
+        self.e_lbl_types = list(itertools.product(self.n_lbl_types, self.n_lbl_types))
+        self.e_lbl_to_id = {self.e_lbl_types[i]: i for i in range(len(self.e_lbl_types))}
         self.node_ids = []
         self.edge_ids = []
 
@@ -86,17 +92,13 @@ class CombcircDataset:
                 self.graph_indicator.extend([i for _ in range(adj_mat.shape[0])])
                 self.graph_labels.append(reliability)
 
-                if self.verbose and ' ' in DG.nodes:
-                    print("found ' ' in", filepath)
-
+                # to extract node labels ('and', 'or', etc.)
                 labels_pattern = r'^(.+?)\d+$'
 
                 node_labels = [re.sub(labels_pattern, r'\1', n) for n in DG.nodes]
-                add_to_dict(self.n_lbl_to_id, node_labels)
                 self.node_ids.extend([self.n_lbl_to_id[lbl] for lbl in node_labels])
 
                 edge_labels = [(re.sub(labels_pattern, r'\1', e[0]), re.sub(labels_pattern, r'\1', e[1])) for e in DG.edges]
-                add_to_dict(self.e_lbl_to_id, edge_labels)
                 self.edge_ids.extend([self.e_lbl_to_id[lbl] for lbl in edge_labels])
 
                 pbar.update(1)
@@ -164,9 +166,10 @@ class CombcircDataset:
             print(f'{self.num_graphs} graphs')
             print(f'{self.num_nodes} nodes')
             print(f'{self.num_edges} edges')
+            print(f'Saved in {output_directory}')
 
 
-class ISCADataset:
+class ISCAS85Dataset:
     def __init__(self, path: str, verbose: bool = False):
         self.path = path
         self.verbose = verbose
@@ -174,8 +177,10 @@ class ISCADataset:
         self.graph_indicator = []
         self.graph_labels = []
 
-        self.n_lbl_to_id = {}
-        self.e_lbl_to_id = {}
+        self.n_lbl_types = ['input', 'output', 'buf', 'and', 'or', 'xor', 'not', 'nand', 'nor', 'xnor', ' ', 'assign']
+        self.n_lbl_to_id = {self.n_lbl_types[i]: i for i in range(len(self.n_lbl_types))}
+        self.e_lbl_types = list(itertools.product(self.n_lbl_types, self.n_lbl_types))
+        self.e_lbl_to_id = {self.e_lbl_types[i]: i for i in range(len(self.e_lbl_types))}
         self.node_ids = []
         self.edge_ids = []
 
@@ -198,8 +203,6 @@ class ISCADataset:
         return self.reliability_map[circuit_name]
 
     def read_graphs(self):
-        from circuitgraph.io import bench_to_circuit
-
         self.num_graphs = len(list(glob.iglob(f'{self.path}/*.bench')))
         with tqdm(total=self.num_graphs) as pbar:
             for i, filepath in enumerate(glob.iglob(f'{self.path}/*.bench')):
@@ -217,17 +220,13 @@ class ISCADataset:
                 self.graph_indicator.extend([i for _ in range(adj_mat.shape[0])])
                 self.graph_labels.append(reliability)
 
-                if self.verbose and ' ' in DG.nodes:
-                    print("found ' ' in", filepath)
-
+                # to extract node labels ('and', 'or', etc.)
                 labels_pattern = r'^(.+?)_(.*)$'
 
                 node_labels = [re.sub(labels_pattern, r'\1', n) for n in DG.nodes]
-                add_to_dict(self.n_lbl_to_id, node_labels)
                 self.node_ids.extend([self.n_lbl_to_id[lbl] for lbl in node_labels])
 
                 edge_labels = [(re.sub(labels_pattern, r'\1', e[0]), re.sub(labels_pattern, r'\1', e[1])) for e in DG.edges]
-                add_to_dict(self.e_lbl_to_id, edge_labels)
                 self.edge_ids.extend([self.e_lbl_to_id[lbl] for lbl in edge_labels])
 
                 pbar.update(1)
@@ -295,17 +294,23 @@ class ISCADataset:
             print(f'{self.num_graphs} graphs')
             print(f'{self.num_nodes} nodes')
             print(f'{self.num_edges} edges')
+            print(f'Saved in {output_directory}')
 
 
 def main():
     args = parse_args()
 
-    # cd = CombcircDataset(args.dataset_path, args.verbose)
-    # cd.read_graphs()
-    # cd.write_dataset(args.output_directory, args.prefix)
-    isca = ISCADataset(args.dataset_path, args.verbose)
-    isca.read_graphs()
-    isca.write_dataset(args.output_directory, args.prefix)
+    if args.dataset_type == 'verilog':
+        cd = CombcircDataset(args.dataset_path, args.verbose)
+        cd.read_graphs()
+        cd.write_dataset(args.output_directory, args.prefix)
+    elif args.dataset_type == 'bench':
+        isca = ISCAS85Dataset(args.dataset_path, args.verbose)
+        isca.read_graphs()
+        isca.write_dataset(args.output_directory, args.prefix)
+    else:
+        # Unsupported dataset type
+        exit(1)
 
 
 if __name__ == '__main__':
