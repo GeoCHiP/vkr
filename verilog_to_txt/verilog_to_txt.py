@@ -63,7 +63,7 @@ class CombcircDataset:
         self.graph_indicator = []
         self.graph_labels = []
 
-        self.n_lbl_types = ['x', 'f', 'buf', 'and', 'or', 'xor', 'not', 'nand', 'nor', 'xnor', ' ', 'assign']
+        self.n_lbl_types = ['x', 'f', 'and', ' ', 'assign', 'xnor', 'buf', 'or', 'xor', 'not', 'nand', 'nor']
         self.n_lbl_to_id = {self.n_lbl_types[i]: i for i in range(len(self.n_lbl_types))}
         self.e_lbl_types = list(itertools.product(self.n_lbl_types, self.n_lbl_types))
         self.e_lbl_to_id = {self.e_lbl_types[i]: i for i in range(len(self.e_lbl_types))}
@@ -177,7 +177,7 @@ class ISCAS85Dataset:
         self.graph_indicator = []
         self.graph_labels = []
 
-        self.n_lbl_types = ['input', 'output', 'buf', 'and', 'or', 'xor', 'not', 'nand', 'nor', 'xnor', ' ', 'assign']
+        self.n_lbl_types = ['input', 'output', 'and', ' ', 'assign', 'xnor', 'buf', 'or', 'xor', 'not', 'nand', 'nor']
         self.n_lbl_to_id = {self.n_lbl_types[i]: i for i in range(len(self.n_lbl_types))}
         self.e_lbl_types = list(itertools.product(self.n_lbl_types, self.n_lbl_types))
         self.e_lbl_to_id = {self.e_lbl_types[i]: i for i in range(len(self.e_lbl_types))}
