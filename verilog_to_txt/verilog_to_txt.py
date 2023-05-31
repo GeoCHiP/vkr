@@ -189,14 +189,9 @@ class ISCAS85Dataset:
             'c17': 0.7419,
             'c432': 0.3128,
             'c499': 0.5333,
-            'c880': 0.5,  # dunno
             'c1355': 0.5345,
             'c1908': 0.617,
-            'c2670': 0.5,  # dunno
             'c3540': 0.3442,
-            'c5315': 0.5,  # dunno
-            'c6288': 0.5,  # dunno
-            'c7552': 0.5,  # dunno
         }
 
     def _get_reliability(self, circuit_name: str) -> float:
